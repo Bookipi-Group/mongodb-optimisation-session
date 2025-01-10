@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  mongo-db:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+    volumes:
+      - mongodb-data:/data/db
+  mongo-seed:
+    build:
+      context: .
+      dockerfile: dockers/mongodb-seed/mongodb-seed.Dockerfile
+    container_name: mongodb-seed
+    links:
+      - mongo-db
+    restart: "no"
+    depends_on:
+      - mongo-db
+
+volumes:
+  mongodb-data: ~
+
