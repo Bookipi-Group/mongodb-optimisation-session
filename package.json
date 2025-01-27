@@ -4,8 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test1": "tsx ./src/test1.ts",
-    "test2": "tsx ./src/test2.ts",
+    "initdata": "tsx ./src/init.ts",
+    "test:batch": "tsx ./src/test1.ts",
+    "test:lean": "tsx ./src/test2.ts",
+    "test:transaction": "tsx ./src/test3.ts",
+    "test:index": "tsx ./src/test4.ts",
+    "test:subdocument": "tsx ./src/test5.ts",
+    "test:aggregate": "tsx ./src/test6.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,6 +24,7 @@
     "mongoose": "^8.8.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.4.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.16.5",
     "prettier": "^3.3.3",

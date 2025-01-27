@@ -1,84 +1,41 @@
+import { CompanyModel } from "./models/index";
 import { init } from "./modules/mongoose";
-import mongoose from "mongoose";
+import { faker } from "@faker-js/faker";
 
-// normal mongoose object returned
-async function singleRunWithNormalMongooseObject() {
-  const { RestaurantModel } = await import("./models");
-  await mongoose.connection.db.runCursorCommand({
-    planCacheClear: RestaurantModel.collection.name,
-  });
-  const start = Date.now();
-  await RestaurantModel.find({
-    cuisine: {$in: ["American", "Chinese", "Pizza", "Italian"]}
-  }).sort({ cuisine: 1, name: 1 })
-  const end = Date.now();
-  return end - start;
-} // normal mongoose object returned
-async function singleRunWithLeanMongooseObject() {
-  const { RestaurantModel } = await import("./models");
-  await mongoose.connection.db.runCursorCommand({
-    planCacheClear: RestaurantModel.collection.name,
-  });
-  const start = Date.now();
-  await RestaurantModel.find({
-    cuisine: {$in: ["American", "Chinese", "Pizza", "Italian"]}
-  })
-    .sort({ cuisine: 1, name: 1 })
-    .lean();
-  const end = Date.now();
-  return end - start;
-}
-
-async function runTests() {
-  let totalTimeCost = 0;
-  for (let i = 0; i < 1000; i++) {
-    totalTimeCost += await singleRunWithLeanMongooseObject();
+async function setupCompanyOneByOneModel() {
+  for (let i = 0; i < 10000; ++i) {
+    const company = new CompanyModel({
+      name: faker.company.name(),
+    });
+    await company.save();
   }
-  console.log(`lean mongoose object took ${totalTimeCost}ms`);
-
-  totalTimeCost = 0;
-  for (let i = 0; i < 1000; i++) {
-    totalTimeCost += await singleRunWithNormalMongooseObject();
-  }
-  console.log(`normal mongoose object took ${totalTimeCost}ms`);
 }
-
-async function run() {
-  const { cleandb } = await import("./utils");
-  await cleandb();
-
-  console.log("before index:");
-  await runTests();
-
-  const { RestaurantModel } = await import("./models");
-  await RestaurantModel.collection.createIndex({
-    cuisine: 1,
-    name: 1,
-  });
-  console.log("after normal index:");
-  await runTests();
-
-  await cleandb();
-  await RestaurantModel.collection.createIndex({
-    cuisine: "hashed",
-    name: 1,
-  });
-  console.log("after hashed index:");
-  await runTests();
-
-  await cleandb();
-  await RestaurantModel.collection.createIndex(
-    { name: 1 },
-    {
-      partialFilterExpression: {
-        cuisine: {$in: ["American", "Chinese", "Pizza", "Italian"]}
+async function setupCompanyInBatch() {
+  const cmds = [];
+  for (let i = 0; i < 10000; ++i) {
+    cmds.push({
+      insertOne: {
+        document: {
+          name: faker.company.name(),
+        },
       },
-    },
-  );
-  console.log("after partial index:");
-  await runTests();
+    });
+  }
+  await CompanyModel.bulkWrite(cmds);
 }
-init("sample_restaurants")
+async function run() {
+  const start = Date.now();
+  await setupCompanyOneByOneModel();
+  const end = Date.now();
+  console.log("Time taken for one by one model", end - start, "ms");
+
+  const start2 = Date.now();
+  await setupCompanyInBatch();
+  const end2 = Date.now();
+  console.log("Time taken for inserting in a batch", end2 - start2, "ms");
+}
+
+init("invoices")
   .then(async () => {
     await run();
     console.log("end");

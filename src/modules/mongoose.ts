@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export const init = async (dbName: string) => {
   return mongoose
-    .connect("mongodb://localhost:27017", {
+    .connect("mongodb://localhost:27017/?replicaSet=dbrs", {
       autoIndex: false, // don't autoIndex
       dbName,
     })

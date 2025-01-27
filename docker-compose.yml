@@ -1,23 +1,17 @@
+
 version: '3.8'
+
 services:
-  mongo-db:
-    image: mongo:latest
+  mongodb:
+    image: mongo:8
+    restart: always
+    container_name: mongodb
     ports:
       - 27017:27017
-    restart: unless-stopped
-    volumes:
-      - mongodb-data:/data/db
-  mongo-seed:
-    build:
-      context: .
-      dockerfile: dockers/mongodb-seed/mongodb-seed.Dockerfile
-    container_name: mongodb-seed
-    links:
-      - mongo-db
-    restart: "no"
-    depends_on:
-      - mongo-db
+    networks:
+      - mongo-network
+    command: ["--replSet", "dbrs", "--bind_ip_all"]
 
-volumes:
-  mongodb-data: ~
-
+networks:
+  mongo-network:
+    driver: bridge
