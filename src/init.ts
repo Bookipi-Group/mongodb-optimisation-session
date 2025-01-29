@@ -20,9 +20,11 @@ async function setupCompany() {
 
   const customers: TCustomer[] = [];
   for (let i = 0; i < 1000; ++i) {
+    const random = Math.random();
     customers.push({
       _id: new Types.ObjectId(),
       name: faker.person.fullName(),
+      country: random < 0.2 ? undefined : random < 0.5 ? "AU" : "US",
     });
   }
   await CustomerModel.insertMany(customers);
@@ -38,6 +40,7 @@ async function setupCompany() {
       customer: {
         _id: customer._id,
         name: customer.name,
+        country: customer.country,
       },
       payments: [],
     };

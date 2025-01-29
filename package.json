@@ -5,12 +5,12 @@
   "main": "index.js",
   "scripts": {
     "initdata": "tsx ./src/init.ts",
-    "test:batch": "tsx ./src/test1.ts",
-    "test:lean": "tsx ./src/test2.ts",
-    "test:transaction": "tsx ./src/test3.ts",
-    "test:index": "tsx ./src/test4.ts",
-    "test:subdocument": "tsx ./src/test5.ts",
-    "test:aggregate": "tsx ./src/test6.ts",
+    "test:batch": "tsx src/batch.ts",
+    "test:lean": "tsx src/lean.ts",
+    "test:transaction": "tsx src/transaction.ts",
+    "test:index": "tsx src/indexing.ts",
+    "test:subdocument": "tsx src/subdocument.ts",
+    "test:aggregate": "tsx src/aggregate.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

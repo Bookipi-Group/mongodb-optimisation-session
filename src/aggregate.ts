@@ -7,17 +7,18 @@ async function run() {
   await InvoiceModel.collection.dropIndexes();
   await PaymentModel.collection.dropIndexes();
   await InvoiceModel.collection.createIndex({
-    "payments.cardType": 1,
+    "customer._id": 1,
   });
   await PaymentModel.collection.createIndex({
-    cardType: 1,
+    amount: 1,
+    invoiceId: 1,
   });
 
   await lodgeTimeCost(async () => {
     const ret = await PaymentModel.aggregate([
       {
         $match: {
-          cardType: "credit",
+          amount: { $gt: 500 },
         },
       },
       {
@@ -42,29 +43,44 @@ async function run() {
         },
       },
     ]);
-  }, "with lookup");
+  }, "aggregate from payments");
 
-  await lodgeTimeCost(async () => {
-    const ret = await InvoiceModel.aggregate([
-      {
-        $match: {
-          "payments.cardType": "credit",
+  await lodgeTimeCost(
+    async () => {
+      const ret = await InvoiceModel.aggregate([
+        {
+          $lookup: {
+            from: "payments",
+            localField: "_id",
+            foreignField: "invoiceId",
+            as: "payments",
+          },
         },
-      },
-      {
-        $group: {
-          _id: "$customer._id",
-          count: { $sum: 1 },
+        {
+          $unwind: "$payments",
         },
-      },
-      {
-        $group: {
-          _id: -1,
-          count: { $sum: 1 },
+        {
+          $match: {
+            "payments.amount": { $gt: 500 },
+          },
         },
-      },
-    ]);
-  }, "with sub-document");
+        {
+          $group: {
+            _id: "$customer._id",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: -1,
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+    },
+    "aggregate from invoices",
+    1,
+  );
 }
 
 init("invoices")

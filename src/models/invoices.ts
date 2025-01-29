@@ -7,6 +7,7 @@ export type TInvoice = {
   customer: {
     _id: Types.ObjectId;
     name: string;
+    country?: string;
   };
   payments: TPayment[];
 };
@@ -23,6 +24,10 @@ export const InvoiceSchema = new Schema<TInvoice>({
     name: {
       type: String,
       required: true,
+    },
+    country: {
+      type: String,
+      required: false,
     },
   },
   payments: {

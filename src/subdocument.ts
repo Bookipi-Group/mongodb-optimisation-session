@@ -7,18 +7,17 @@ async function run() {
   await InvoiceModel.collection.dropIndexes();
   await PaymentModel.collection.dropIndexes();
   await InvoiceModel.collection.createIndex({
-    "customer._id": 1,
+    "payments.cardType": 1,
   });
   await PaymentModel.collection.createIndex({
-    amount: 1,
-    invoiceId: 1,
+    cardType: 1,
   });
 
   await lodgeTimeCost(async () => {
     const ret = await PaymentModel.aggregate([
       {
         $match: {
-          amount: { $gt: 500 },
+          cardType: "credit",
         },
       },
       {
@@ -43,24 +42,50 @@ async function run() {
         },
       },
     ]);
-  }, "aggregate from payments");
+  }, "with lookup");
+
+  await PaymentModel.collection.dropIndexes();
+  await PaymentModel.collection.createIndex({
+    cardType: 1,
+    invoiceId: 1,
+  });
+
+  await lodgeTimeCost(async () => {
+    const ret = await PaymentModel.aggregate([
+      {
+        $match: {
+          cardType: "credit",
+        },
+      },
+      {
+        $lookup: {
+          from: "invoices",
+          localField: "invoiceId",
+          foreignField: "_id",
+          as: "invoice",
+        },
+      },
+      { $unwind: "$invoice" },
+      {
+        $group: {
+          _id: "$invoice.customer._id",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: -1,
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+  }, "with lookup with payments with compound indexes");
 
   await lodgeTimeCost(async () => {
     const ret = await InvoiceModel.aggregate([
       {
-        $lookup: {
-          from: "payments",
-          localField: "_id",
-          foreignField: "invoiceId",
-          as: "payments",
-        },
-      },
-      {
-        $unwind: "$payments",
-      },
-      {
         $match: {
-          "payments.amount": { $gt: 500 },
+          "payments.cardType": "credit",
         },
       },
       {
@@ -76,7 +101,7 @@ async function run() {
         },
       },
     ]);
-  }, "aggregate from invoices");
+  }, "with sub-document");
 }
 
 init("invoices")
