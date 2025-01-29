@@ -11,6 +11,12 @@ services:
     networks:
       - mongo-network
     command: ["--replSet", "dbrs", "--bind_ip_all"]
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'dbrs',members:[{_id:0,host:'127.0.0.1:27017'}]}) }" | mongosh
+      interval: 5s
+      timeout: 15s
+      start_period: 15s
+      retries: 10
 
 networks:
   mongo-network:
